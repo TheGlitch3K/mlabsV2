@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <title>Myriad Labs</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+   <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="dark-theme">
+   <div id="app">
+       <header>
+           <button id="sidebar-toggle" class="icon-button"><i class="fas fa-bars"></i></button>
+           <h1>Myriad Labs</h1>
+           <div id="theme-toggle">
+               <input type="checkbox" id="theme-switch">
+               <label for="theme-switch" class="switch">
+                   <i class="fas fa-sun"></i>
+                   <i class="fas fa-moon"></i>
+               </label>
+           </div>
+       </header>
+       <main>
+           <aside id="sidebar">
+               <div class="tool-category">
+                   <h3>Drawing Tools</h3>
+                   <div class="tool-grid">
+                       <button class="tool-button" data-tool="trendline"><i class="fas fa-chart-line"></i></button>
+                       <button class="tool-button" data-tool="horizontalLine"><i class="fas fa-minus"></i></button>
+                       <button class="tool-button" data-tool="verticalLine"><i class="fas fa-grip-lines-vertical"></i></button>
+                       <button class="tool-button" data-tool="rectangle"><i class="far fa-square"></i></button>
+                       <button class="tool-button" data-tool="ellipse"><i class="far fa-circle"></i></button>
+                       <button class="tool-button" data-tool="fibonacciRetracement"><i class="fas fa-project-diagram"></i></button>
+                       <button class="tool-button" data-tool="text"><i class="fas fa-font"></i></button>
+                       <button class="tool-button" data-tool="arrow"><i class="fas fa-arrow-right"></i></button>
+                   </div>
+               </div>
+               <div class="tool-category">
+                   <h3>Indicators</h3>
+                   <div class="tool-grid">
+                       <button class="tool-button" data-indicator="ma"><i class="fas fa-wave-square"></i></button>
+                       <button class="tool-button" data-indicator="rsi"><i class="fas fa-chart-area"></i></button>
+                       <button class="tool-button" data-indicator="macd"><i class="fas fa-signal"></i></button>
+                       <button class="tool-button" data-indicator="bollinger"><i class="fas fa-braille"></i></button>
+                       <button class="tool-button" data-indicator="stochastic"><i class="fas fa-percent"></i></button>
+                       <button class="tool-button" data-indicator="volume"><i class="fas fa-chart-bar"></i></button>
+                   </div>
+               </div>
+               <div class="tool-category">
+                   <h3>Zoom Tools</h3>
+                   <div class="tool-grid">
+                       <button class="tool-button" data-zoom="in"><i class="fas fa-search-plus"></i></button>
+                       <button class="tool-button" data-zoom="out"><i class="fas fa-search-minus"></i></button>
+                       <button class="tool-button" data-zoom="fit"><i class="fas fa-compress-arrows-alt"></i></button>
+                   </div>
+               </div>
+               <div class="tool-category">
+                   <h3>Actions</h3>
+                   <div class="tool-grid">
+                       <button class="tool-button" id="undo-button"><i class="fas fa-undo"></i></button>
+                       <button class="tool-button" id="redo-button"><i class="fas fa-redo"></i></button>
+                   </div>
+               </div>
+           </aside>
+           <div id="chart-container">
+               <div id="timeframe-selector">
+                   <button class="timeframe-btn" data-timeframe="M1">1m</button>
+                   <button class="timeframe-btn" data-timeframe="M5">5m</button>
+                   <button class="timeframe-btn" data-timeframe="M15">15m</button>
+                   <button class="timeframe-btn" data-timeframe="M30">30m</button>
+                   <button class="timeframe-btn" data-timeframe="H1" selected>1h</button>
+                   <button class="timeframe-btn" data-timeframe="H4">4h</button>
+                   <button class="timeframe-btn" data-timeframe="D">1D</button>
+                   <button class="timeframe-btn" data-timeframe="W">1W</button>
+                   <button class="timeframe-btn" data-timeframe="M">1M</button>
+               </div>
+               <div id="symbol-info"></div>
+               <div id="candlestick-chart"></div>
+           </div>
+           <aside id="watchlist-panel" class="panel">
+               <h3>Watchlist <button id="watchlist-toggle" class="icon-button"><i class="fas fa-chevron-right"></i></button></h3>
+               <div id="watchlist-search-container">
+                   <input type="text" id="watchlist-search" placeholder="Search instruments...">
+                   <div id="instrument-category-dropdown">
+                       <button id="instrument-category-button">All</button>
+                       <div id="instrument-category-content">
+                           <a href="#" data-category="all">All</a>
+                           <a href="#" data-category="forex">Forex</a>
+                           <a href="#" data-category="commodities">Commodities</a>
+                           <a href="#" data-category="indices">Indices</a>
+                       </div>
+                   </div>
+                   <div id="search-results"></div>
+               </div>
+               <div id="watchlist-container"></div>
+           </aside>
+       </main>
+       <div id="ai-chat-icon"><i class="fas fa-robot"></i></div>
+       <div id="ai-chat-panel" class="panel">
+           <div id="ai-chat-header">
+               <h3>AI Trading Assistant</h3>
+               <button id="maximize-chat" class="icon-button"><i class="fas fa-expand"></i></button>
+               <button id="close-chat" class="icon-button"><i class="fas fa-times"></i></button>
+           </div>
+           <div id="chat-messages"></div>
+           <div id="chat-input-container">
+               <input type="text" id="user-input" placeholder="Ask about trading or chart analysis...">
+               <button id="send-message" class="icon-button"><i class="fas fa-paper-plane"></i></button>
+           </div>
+       </div>
+   </div>
+   <div id="chart-context-menu"></div>
+   <div id="watchlist-context-menu"></div>
+   <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
