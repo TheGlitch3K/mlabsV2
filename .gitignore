@@ -1,0 +1,7 @@
+project_overview.md.sh
+Stories/
+.env
+documentation/
+__pycache__/
+*.md
+*.sh
