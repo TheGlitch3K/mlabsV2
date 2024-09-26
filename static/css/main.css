@@ -1,0 +1,25 @@
+@import 'variables.css';
+@import 'layout.css';
+@import 'components.css';
+@import 'sidebar.css';
+@import 'chart.css';
+@import 'watchlist.css';
+@import 'ai-chat.css';
+@import 'modal.css';
+@import 'responsive.css';
+
+/* Global Styles */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}

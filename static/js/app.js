@@ -1,8 +1,8 @@
-import IndicatorManager from './indicators.js';
-
-window.watchlist = JSON.parse(localStorage.getItem('watchlist')) || ['EUR_USD', 'GBP_USD'];
-window.currentSymbol = 'EUR_USD';
-window.currentTimeframe = 'H1';
+let watchlist = JSON.parse(localStorage.getItem('watchlist')) || ['EUR_USD', 'GBP_USD'];
+let currentSymbol = 'EUR_USD';
+let currentTimeframe = 'H1';
+let strategies = ['Moving Average Crossover', 'RSI Overbought/Oversold', 'MACD Divergence'];
+let activeStrategy = null;
 
 function toggleTheme() {
     document.body.classList.toggle('light-theme');
@@ -36,15 +36,15 @@ function toggleWatchlist() {
 }
 
 function adjustChartSize() {
-    const chartContainer = document.getElementById('chart-container');
-    const sidebar = document.getElementById('sidebar');
-    const watchlistPanel = document.getElementById('watchlist-panel');
+    var chartContainer = document.getElementById('chart-container');
+    var sidebar = document.getElementById('sidebar');
+    var watchlistPanel = document.getElementById('watchlist-panel');
    
-    const sidebarWidth = sidebar.classList.contains('collapsed') ? 50 : 250;
-    const watchlistWidth = watchlistPanel.classList.contains('collapsed') ? 0 : 300;
+    var sidebarWidth = sidebar.classList.contains('collapsed') ? 50 : 250;
+    var watchlistWidth = watchlistPanel.classList.contains('collapsed') ? 0 : 300;
    
-    const newWidth = window.innerWidth - sidebarWidth - watchlistWidth;
-    chartContainer.style.width = `${newWidth}px`;
+    var newWidth = window.innerWidth - sidebarWidth - watchlistWidth;
+    chartContainer.style.width = newWidth + 'px';
    
     if (typeof chart !== 'undefined' && chart) {
         chart.applyOptions({ width: newWidth });
@@ -52,27 +52,27 @@ function adjustChartSize() {
 }
 
 function addToWatchlist(symbol) {
-    if (!window.watchlist.includes(symbol)) {
-        window.watchlist.push(symbol);
+    if (!watchlist.includes(symbol)) {
+        watchlist.push(symbol);
         saveWatchlist();
         updateWatchlistUI();
     }
 }
 
 function removeFromWatchlist(symbol) {
-    window.watchlist = window.watchlist.filter(s => s !== symbol);
+    watchlist = watchlist.filter(s => s !== symbol);
     saveWatchlist();
     updateWatchlistUI();
 }
 
 function saveWatchlist() {
-    localStorage.setItem('watchlist', JSON.stringify(window.watchlist));
+    localStorage.setItem('watchlist', JSON.stringify(watchlist));
 }
 
 function updateWatchlistUI() {
     const container = document.getElementById('watchlist-container');
     container.innerHTML = '';
-    window.watchlist.forEach(symbol => {
+    watchlist.forEach(symbol => {
         const item = document.createElement('div');
         item.className = 'watchlist-item';
         item.setAttribute('draggable', true);
@@ -88,7 +88,7 @@ function updateWatchlistUI() {
             removeFromWatchlist(symbol);
         });
         item.addEventListener('click', () => {
-            window.currentSymbol = symbol;
+            currentSymbol = symbol;
             window.chartFunctions.switchSymbol(symbol);
         });
         container.appendChild(item);
@@ -118,8 +118,8 @@ function sendChatMessage() {
             body: JSON.stringify({
                 message: message,
                 chartContext: {
-                    symbol: window.currentSymbol,
-                    timeframe: window.currentTimeframe,
+                    symbol: currentSymbol,
+                    timeframe: currentTimeframe,
                     price: window.chartFunctions.getLastPrice(),
                     indicators: getActiveIndicators()
                 }
@@ -212,26 +212,26 @@ function updateSearchResults(results) {
         item.className = 'search-result-item';
         item.innerHTML = `
             <span class="instrument-name">${instrument}</span>
-            <button class="add-btn">${window.watchlist.includes(instrument) ? '-' : '+'}</button>
+            <button class="add-btn">${watchlist.includes(instrument) ? '-' : '+'}</button>
         `;
         item.querySelector('.instrument-name').addEventListener('click', () => {
             window.chartFunctions.switchSymbol(instrument);
         });
         item.querySelector('.add-btn').addEventListener('click', (e) => {
             e.stopPropagation();
-            if (window.watchlist.includes(instrument)) {
+            if (watchlist.includes(instrument)) {
                 removeFromWatchlist(instrument);
             } else {
                 addToWatchlist(instrument);
             }
-            e.target.textContent = window.watchlist.includes(instrument) ? '-' : '+';
+            e.target.textContent = watchlist.includes(instrument) ? '-' : '+';
         });
         searchResults.appendChild(item);
     });
 }
 
 function updateWatchlistData() {
-    window.watchlist.forEach(symbol => {
+    watchlist.forEach(symbol => {
         fetch(`/api/price_data?symbol=${symbol}`)
             .then(response => response.json())
             .then(data => {
@@ -257,17 +257,153 @@ function debounce(func, wait) {
     };
 }
 
-function openIndicatorsModal() {
-    const modal = document.getElementById('indicators-modal');
-    modal.style.display = 'block';
-    IndicatorManager.fetchIndicators().then(() => {
-        IndicatorManager.updateIndicatorsList('#indicators-list', 'all');
+function initializeStrategiesDropdown() {
+    const dropdown = document.getElementById('strategies-dropdown');
+    const dropdownBtn = document.getElementById('strategies-dropdown-btn');
+
+    // Populate dropdown with strategies
+    strategies.forEach(strategy => {
+        const button = document.createElement('button');
+        button.textContent = strategy;
+        button.addEventListener('click', () => selectStrategy(strategy));
+        dropdown.appendChild(button);
+    });
+
+    // Toggle dropdown visibility
+    dropdownBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('show');
+    });
+
+    // Close dropdown when clicking outside
+    window.addEventListener('click', () => {
+        dropdown.classList.remove('show');
     });
 }
 
-function closeIndicatorsModal() {
+function selectStrategy(strategy) {
+    activeStrategy = strategy;
+    console.log(`Selected strategy: ${strategy}`);
+    // Here you would typically call a function to apply the strategy to the chart
+    applyStrategyToChart(strategy);
+}
+
+function applyStrategyToChart(strategy) {
+    // Remove any existing strategy indicators
+    removeExistingStrategyIndicators();
+
+    switch(strategy) {
+        case 'Moving Average Crossover':
+            addMovingAverageCrossover();
+            break;
+        case 'RSI Overbought/Oversold':
+            addRSIStrategy();
+            break;
+        case 'MACD Divergence':
+            addMACDDivergence();
+            break;
+    }
+}
+
+function removeExistingStrategyIndicators() {
+    // Implement this function to remove existing strategy indicators from the chart
+    console.log('Removing existing strategy indicators');
+}
+
+function addMovingAverageCrossover() {
+    // Implement Moving Average Crossover strategy
+    console.log('Adding Moving Average Crossover strategy');
+    window.chartFunctions.addIndicator('sma', { period: 10, color: 'blue' });
+    window.chartFunctions.addIndicator('sma', { period: 20, color: 'red' });
+}
+
+function addRSIStrategy() {
+    // Implement RSI Overbought/Oversold strategy
+    console.log('Adding RSI Overbought/Oversold strategy');
+    window.chartFunctions.addIndicator('rsi', { period: 14, overbought: 70, oversold: 30 });
+}
+
+function addMACDDivergence() {
+    // Implement MACD Divergence strategy
+    console.log('Adding MACD Divergence strategy');
+    window.chartFunctions.addIndicator('macd', { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 });
+}
+
+function initializeIndicatorsModal() {
     const modal = document.getElementById('indicators-modal');
-    modal.style.display = 'none';
+    const btn = document.getElementById('indicators-button');
+    const span = document.getElementsByClassName('close')[0];
+    const indicatorsList = document.getElementById('indicators-list');
+    const indicatorSearch = document.getElementById('indicator-search');
+    const categoryButtons = document.querySelectorAll('.category-btn');
+
+    btn.onclick = () => modal.style.display = 'block';
+    span.onclick = () => modal.style.display = 'none';
+    window.onclick = (event) => {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    };
+
+    // Populate indicators list
+    const indicators = [
+        { name: 'Simple Moving Average', category: 'trend' },
+        { name: 'Exponential Moving Average', category: 'trend' },
+        { name: 'Relative Strength Index', category: 'momentum' },
+        { name: 'Moving Average Convergence Divergence', category: 'momentum' },
+        { name: 'Bollinger Bands', category: 'volatility' },
+        { name: 'Average True Range', category: 'volatility' },
+        { name: 'On-Balance Volume', category: 'volume' },
+    ];
+
+    function renderIndicators(filteredIndicators) {
+        indicatorsList.innerHTML = '';
+        filteredIndicators.forEach(indicator => {
+            const item = document.createElement('div');
+            item.className = 'indicator-item';
+            item.innerHTML = `
+                <span>${indicator.name}</span>
+                <button class="add-indicator-btn">Add</button>
+                <button class="favorite-btn"><i class="far fa-star"></i></button>
+            `;
+            item.querySelector('.add-indicator-btn').addEventListener('click', () => addIndicator(indicator.name));
+            item.querySelector('.favorite-btn').addEventListener('click', (e) => toggleFavorite(e.target));
+            indicatorsList.appendChild(item);
+        });
+    }
+
+    renderIndicators(indicators);
+
+    indicatorSearch.addEventListener('input', () => {
+        const searchTerm = indicatorSearch.value.toLowerCase();
+        const filteredIndicators = indicators.filter(indicator => 
+            indicator.name.toLowerCase().includes(searchTerm)
+        );
+        renderIndicators(filteredIndicators);
+    });
+
+    categoryButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            categoryButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            const category = button.dataset.category;
+            const filteredIndicators = category === 'all' 
+                ? indicators 
+                : indicators.filter(indicator => indicator.category === category);
+            renderIndicators(filteredIndicators);
+        });
+    });
+}
+
+function addIndicator(indicatorName) {
+    console.log(`Adding indicator: ${indicatorName}`);
+    // Implement the logic to add the indicator to the chart
+    // You might want to call a function from chartFunctions here
+}
+
+function toggleFavorite(button) {
+    button.classList.toggle('active');
+    // Implement the logic to save favorite indicators
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -290,17 +426,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
    
     initializeWatchlist();
+    initializeStrategiesDropdown();
+    initializeIndicatorsModal();
    
     document.querySelectorAll('.timeframe-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            if (e.target.id === 'indicators-button') {
-                openIndicatorsModal();
-            } else {
-                document.querySelector('.timeframe-btn[selected]').removeAttribute('selected');
-                e.target.setAttribute('selected', '');
-                window.currentTimeframe = e.target.dataset.timeframe;
-                window.chartFunctions.switchTimeframe(e.target.dataset.timeframe);
-            }
+            document.querySelector('.timeframe-btn[selected]').removeAttribute('selected');
+            e.target.setAttribute('selected', '');
+            currentTimeframe = e.target.dataset.timeframe;
+            window.chartFunctions.switchTimeframe(e.target.dataset.timeframe);
         });
     });
 
@@ -311,22 +445,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    document.querySelector('.close').addEventListener('click', closeIndicatorsModal);
-    document.getElementById('indicator-search').addEventListener('input', (e) => {
-        IndicatorManager.filterIndicators(e.target.value);
-    });
-
-    document.querySelectorAll('.category-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            document.querySelector('.category-btn.active').classList.remove('active');
-            e.target.classList.add('active');
-            const category = e.target.dataset.category;
-            IndicatorManager.updateIndicatorsList('#indicators-list', category);
-        });
-    });
-
     window.addEventListener('resize', adjustChartSize);
     adjustChartSize();
 });
 
 setInterval(updateWatchlistData, 60000);
+
+// Export functions to be used by other modules if needed
+window.appFunctions = {
+    toggleTheme,
+    toggleSidebar,
+    toggleWatchlist,
+    addToWatchlist,
+    removeFromWatchlist,
+    toggleChatPanel,
+    maximizeChatPanel,
+    sendChatMessage,
+    selectStrategy,
+    addIndicator
+};

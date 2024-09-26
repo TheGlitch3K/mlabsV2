@@ -2,6 +2,7 @@ let chart;
 let candleSeries;
 let activeDrawingTool = null;
 let drawings = [];
+let indicators = [];
 
 function createChart() {
     const chartContainer = document.getElementById('candlestick-chart');
@@ -65,7 +66,7 @@ function createChart() {
 }
 
 function fetchLatestData() {
-    fetch(`/api/candlestick_data?symbol=${window.currentSymbol}&timeframe=${window.currentTimeframe}&count=1000`)
+    fetch(`/api/candlestick_data?symbol=${currentSymbol}&timeframe=${currentTimeframe}&count=1000`)
         .then(response => response.json())
         .then(data => {
             if (data && data.length > 0) {
@@ -77,7 +78,7 @@ function fetchLatestData() {
                     close: parseFloat(d.close)
                 }));
                 candleSeries.setData(formattedData);
-                updateSymbolInfo(window.currentSymbol, formattedData[formattedData.length - 1]);
+                updateSymbolInfo(currentSymbol, formattedData[formattedData.length - 1]);
             }
         })
         .catch(error => console.error('Error fetching candlestick data:', error));
@@ -89,17 +90,14 @@ function updateSymbolInfo(symbol, lastCandle) {
 }
 
 function switchTimeframe(timeframe) {
-    window.currentTimeframe = timeframe;
+    currentTimeframe = timeframe;
     fetchLatestData();
 }
 
 function switchSymbol(symbol) {
-    window.currentSymbol = symbol;
+    currentSymbol = symbol;
     fetchLatestData();
 }
-
-let drawingStartPoint = null;
-let currentDrawing = null;
 
 function handleMouseDown(e) {
     if (activeDrawingTool) {
@@ -166,10 +164,10 @@ function showChartContextMenu(x, y) {
     contextMenu.style.left = `${x}px`;
     contextMenu.style.top = `${y}px`;
 
-    // Populate context menu options
     contextMenu.innerHTML = `
         <div class="context-menu-item" onclick="toggleLogScale()">Toggle Log Scale</div>
         <div class="context-menu-item" onclick="showChartSettings()">Chart Settings</div>
+        <div class="context-menu-item" onclick="clearAllDrawings()">Clear All Drawings</div>
     `;
 }
 
@@ -184,6 +182,12 @@ function toggleLogScale() {
 function showChartSettings() {
     // Implement chart settings dialog
     console.log("Chart settings clicked");
+    hideChartContextMenu();
+}
+
+function clearAllDrawings() {
+    drawings.forEach(drawing => chart.removeSeries(drawing));
+    drawings = [];
     hideChartContextMenu();
 }
 
@@ -204,6 +208,36 @@ function getLastPrice() {
     return null;
 }
 
+function addIndicator(type, params = {}) {
+    let indicator;
+    switch (type) {
+        case 'sma':
+            indicator = chart.addLineSeries({
+                color: 'rgba(4, 111, 232, 1)',
+                lineWidth: 2,
+            });
+            // Calculate SMA values
+            break;
+        case 'ema':
+            indicator = chart.addLineSeries({
+                color: 'rgba(255, 82, 82, 1)',
+                lineWidth: 2,
+            });
+            // Calculate EMA values
+            break;
+        // Add more indicator types as needed
+    }
+    indicators.push({ type, series: indicator, params });
+    // Calculate and set data for the indicator
+}
+
+function removeIndicator(index) {
+    if (index >= 0 && index < indicators.length) {
+        chart.removeSeries(indicators[index].series);
+        indicators.splice(index, 1);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', createChart);
 
 // Expose functions to be used in app.js
@@ -212,5 +246,7 @@ window.chartFunctions = {
     switchSymbol,
     fetchLatestData,
     setActiveDrawingTool,
-    getLastPrice
+    getLastPrice,
+    addIndicator,
+    removeIndicator
 };

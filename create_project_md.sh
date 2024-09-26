@@ -3,14 +3,10 @@
 set -e
 
 # Configuration (you can modify these variables as needed)
-OUTPUT_DIR="documentation"
-OUTPUT_FILE="$OUTPUT_DIR/project_overview.md"
+OUTPUT_FILE="project_overview.md"
 MAX_FILE_SIZE_KB=1000
-EXCLUDE_DIRS=(".git" "node_modules" "venv" "__pycache__" "$OUTPUT_DIR")
-EXCLUDE_FILES=("create_project_md.sh")
-
-# Create the output directory if it doesn't exist
-mkdir -p "$OUTPUT_DIR"
+EXCLUDE_DIRS=(".git" "node_modules" "venv" "__pycache__")
+EXCLUDE_FILES=("create_project_md.sh" "$OUTPUT_FILE")
 
 # Function to escape special characters for Markdown code blocks
 escape_markdown() {
@@ -39,12 +35,12 @@ should_exclude() {
     
     # Check if file is in EXCLUDE_FILES
     for exclude in "${EXCLUDE_FILES[@]}"; do
-        [[ "$(basename "$file")" == "$exclude" ]] && return 0
+        [[ "$file" == *"$exclude" ]] && return 0
     done
     
     # Check if file is in an excluded directory
     for dir in "${EXCLUDE_DIRS[@]}"; do
-        [[ "$file" == *"/$dir/"* || "$file" == *"$dir/"* ]] && return 0
+        [[ "$file" == *"/$dir/"* ]] && return 0
     done
     
     # Check file size

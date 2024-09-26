@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Myriad Labs</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>Myriad Labs</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -53,17 +53,25 @@
                 </div>
             </aside>
             <div id="chart-container">
-                <div id="timeframe-selector">
-                    <button class="timeframe-btn" data-timeframe="M1">1m</button>
-                    <button class="timeframe-btn" data-timeframe="M5">5m</button>
-                    <button class="timeframe-btn" data-timeframe="M15">15m</button>
-                    <button class="timeframe-btn" data-timeframe="M30">30m</button>
-                    <button class="timeframe-btn" data-timeframe="H1" selected>1h</button>
-                    <button class="timeframe-btn" data-timeframe="H4">4h</button>
-                    <button class="timeframe-btn" data-timeframe="D">1D</button>
-                    <button class="timeframe-btn" data-timeframe="W">1W</button>
-                    <button class="timeframe-btn" data-timeframe="M">1M</button>
-                    <button id="indicators-button" class="timeframe-btn"><i class="fas fa-chart-line"></i> Indicators</button>
+                <div id="chart-controls">
+                    <div id="timeframe-selector">
+                        <button class="timeframe-btn" data-timeframe="M1">1m</button>
+                        <button class="timeframe-btn" data-timeframe="M5">5m</button>
+                        <button class="timeframe-btn" data-timeframe="M15">15m</button>
+                        <button class="timeframe-btn" data-timeframe="M30">30m</button>
+                        <button class="timeframe-btn" data-timeframe="H1" selected>1h</button>
+                        <button class="timeframe-btn" data-timeframe="H4">4h</button>
+                        <button class="timeframe-btn" data-timeframe="D">1D</button>
+                        <button class="timeframe-btn" data-timeframe="W">1W</button>
+                        <button class="timeframe-btn" data-timeframe="M">1M</button>
+                    </div>
+                    <div id="chart-buttons">
+                        <button id="indicators-button" class="chart-btn"><i class="fas fa-chart-line"></i> Indicators</button>
+                        <button id="strategies-dropdown-btn" class="chart-btn"><i class="fas fa-brain"></i> Strategies</button>
+                    </div>
+                </div>
+                <div id="strategies-dropdown" class="dropdown-content">
+                    <!-- Strategy options will be dynamically added here -->
                 </div>
                 <div id="symbol-info"></div>
                 <div id="candlestick-chart"></div>
@@ -102,26 +110,29 @@
     </div>
     <div id="chart-context-menu"></div>
     <div id="watchlist-context-menu"></div>
+    
+    <!-- Indicators Modal -->
     <div id="indicators-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Indicators, Metrics & Strategies</h2>
+                <h2>Add Indicator</h2>
                 <span class="close">&times;</span>
             </div>
-            <div class="modal-body">
-                <input type="text" id="indicator-search" placeholder="Search indicators...">
-                <div id="indicator-categories">
-                    <button class="category-btn active" data-category="all">All</button>
-                    <button class="category-btn" data-category="favorites">Favorites</button>
-                    <button class="category-btn" data-category="personal">Personal</button>
-                    <button class="category-btn" data-category="technicals">Technicals</button>
-                </div>
-                <div id="indicators-list"></div>
+            <input type="text" id="indicator-search" placeholder="Search indicators...">
+            <div id="indicator-categories">
+                <button class="category-btn active" data-category="all">All</button>
+                <button class="category-btn" data-category="trend">Trend</button>
+                <button class="category-btn" data-category="momentum">Momentum</button>
+                <button class="category-btn" data-category="volatility">Volatility</button>
+                <button class="category-btn" data-category="volume">Volume</button>
+            </div>
+            <div id="indicators-list">
+                <!-- Indicator items will be dynamically added here -->
             </div>
         </div>
     </div>
+
     <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/indicators.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>
