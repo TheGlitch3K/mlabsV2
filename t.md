@@ -1,9 +1,0 @@
-static/css/styles.css
-static/js/app.js
-static/js/chart.js
-templates/index.html
-.env
-ai_client.py
-data_fetcher.py
-main.py
-requirements.txt

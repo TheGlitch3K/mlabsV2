@@ -1,6 +1,6 @@
 # Project Code Overview
 
-Generated on: Wed Sep 25 19:46:51 CDT 2024
+Generated on: Thu Sep 26 18:52:47 CDT 2024
 
 ## Table of Contents
 
@@ -23,6 +23,9 @@ Generated on: Wed Sep 25 19:46:51 CDT 2024
 - [./static/js/app.js](#file---static-js-app-js)
 - [./static/js/chart.js](#file---static-js-chart-js)
 - [./static/js/indicators.js](#file---static-js-indicators-js)
+- [./static/js/indicators/divergence.js](#file---static-js-indicators-divergence-js)
+- [./static/js/indicators/macd.js](#file---static-js-indicators-macd-js)
+- [./static/js/strategies/myriadLabs.js](#file---static-js-strategies-myriadLabs-js)
 - [./t.md](#file---t-md)
 - [./templates/index.html](#file---templates-index-html)
 
@@ -181,8 +184,7 @@ class AIClient:
            return message
        except Exception as e:
            logger.error(f"Error generating AI response: {str(e)}")
-           raise Exception(f"Error generating AI response: {str(e)}")
-```
+           raise Exception(f"Error generating AI response: {str(e)}")```
 
 ## File: ./data_fetcher.py {#file---data-fetcher-py}
 
@@ -302,8 +304,7 @@ class OandaDataFetcher:
 
    def clear_cache(self):
        with self.cache_lock:
-           self.cache.clear()
-```
+           self.cache.clear()```
 
 ## File: ./main.py {#file---main-py}
 
@@ -418,8 +419,7 @@ def favorite_indicator():
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    app.run(debug=True)
-```
+    app.run(debug=True)```
 
 ## File: ./requirements.txt {#file---requirements-txt}
 
@@ -429,8 +429,7 @@ Werkzeug==2.3.6
 pandas==1.3.3
 requests==2.26.0
 python-dotenv==0.19.0
-openai==0.27.0
-```
+openai==0.27.0```
 
 ## File: ./static/css/ai-chat.css {#file---static-css-ai-chat-css}
 
@@ -510,8 +509,7 @@ openai==0.27.0
     color: var(--text-color);
     border: 1px solid var(--border-color);
     border-radius: 5px;
-}
-```
+}```
 
 ## File: ./static/css/chart.css {#file---static-css-chart-css}
 
@@ -665,8 +663,7 @@ main {
     background-color: var(--panel-bg);
     border-left: 1px solid var(--border-color);
     transition: width 0.3s ease;
-}
-```
+}```
 
 ## File: ./static/css/main.css {#file---static-css-main-css}
 
@@ -695,8 +692,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
-}
-```
+}```
 
 ## File: ./static/css/modal.css {#file---static-css-modal-css}
 
@@ -813,8 +809,7 @@ body {
 
 .favorite-btn.active {
     color: gold;
-}
-```
+}```
 
 ## File: ./static/css/responsive.css {#file---static-css-responsive-css}
 
@@ -920,8 +915,7 @@ body {
         width: 100%;
         margin-bottom: 5px;
     }
-}
-```
+}```
 
 ## File: ./static/css/sidebar.css {#file---static-css-sidebar-css}
 
@@ -1918,8 +1912,7 @@ input:checked + .switch::before {
     --hover-color: #e6e9f0;
     --ai-chat-bg: #f5f5f5;
     --modal-bg: #f0f3fa;
-}
-```
+}```
 
 ## File: ./static/css/watchlist.css {#file---static-css-watchlist-css}
 
@@ -2084,8 +2077,7 @@ input:checked + .switch::before {
     padding: 5px 0;
     z-index: 1000;
     display: none;
-}
-```
+}```
 
 ## File: ./static/js/app.js {#file---static-js-app-js}
 
@@ -2811,8 +2803,7 @@ window.chartFunctions = {
     getLastPrice,
     addIndicator,
     removeIndicator
-};
-```
+};```
 
 ## File: ./static/js/indicators.js {#file---static-js-indicators-js}
 
@@ -2895,8 +2886,370 @@ const IndicatorManager = (function() {
     };
 })();
 
-export default IndicatorManager;
+export default IndicatorManager;```
+
+## File: ./static/js/indicators/divergence.js {#file---static-js-indicators-divergence-js}
+
+```javascript
+class DivergenceDetector {
+    constructor(pivotLeftBars, pivotRightBars, lookBackLength, pivotPointsToCheck) {
+        this.pivotLeftBars = pivotLeftBars;
+        this.pivotRightBars = pivotRightBars;
+        this.lookBackLength = lookBackLength;
+        this.pivotPointsToCheck = pivotPointsToCheck;
+    }
+
+    detect(priceData, indicatorData) {
+        const pivotHighs = this.findPivotPoints(priceData, true);
+        const pivotLows = this.findPivotPoints(priceData, false);
+        const divergences = [];
+
+        // Check for bullish divergences
+        for (let i = 1; i < pivotLows.length; i++) {
+            const currentLow = pivotLows[i];
+            const previousLow = pivotLows[i - 1];
+
+            if (currentLow.price > previousLow.price && 
+                indicatorData[currentLow.index] < indicatorData[previousLow.index]) {
+                divergences.push({
+                    type: 'bullish',
+                    x1: previousLow.index,
+                    y1: previousLow.price,
+                    x2: currentLow.index,
+                    y2: currentLow.price
+                });
+            }
+        }
+
+        // Check for bearish divergences
+        for (let i = 1; i < pivotHighs.length; i++) {
+            const currentHigh = pivotHighs[i];
+            const previousHigh = pivotHighs[i - 1];
+
+            if (currentHigh.price < previousHigh.price && 
+                indicatorData[currentHigh.index] > indicatorData[previousHigh.index]) {
+                divergences.push({
+                    type: 'bearish',
+                    x1: previousHigh.index,
+                    y1: previousHigh.price,
+                    x2: currentHigh.index,
+                    y2: currentHigh.price
+                });
+            }
+        }
+
+        return divergences;
+    }
+
+    findPivotPoints(data, isHigh) {
+        const pivots = [];
+        for (let i = this.pivotLeftBars; i < data.length - this.pivotRightBars; i++) {
+            const slice = data.slice(i - this.pivotLeftBars, i + this.pivotRightBars + 1);
+            const centralValue = data[i];
+            const isPivot = isHigh 
+                ? slice.every(value => value <= centralValue)
+                : slice.every(value => value >= centralValue);
+
+            if (isPivot) {
+                pivots.push({ index: i, price: centralValue });
+            }
+        }
+        return pivots;
+    }
+}
+
+export default DivergenceDetector;
 ```
+
+## File: ./static/js/indicators/macd.js {#file---static-js-indicators-macd-js}
+
+```javascript
+class MACD {
+    constructor(fastPeriod = 12, slowPeriod = 26, signalPeriod = 9) {
+        this.fastPeriod = fastPeriod;
+        this.slowPeriod = slowPeriod;
+        this.signalPeriod = signalPeriod;
+    }
+
+    calculate(data) {
+        const fastEMA = this.calculateEMA(data, this.fastPeriod);
+        const slowEMA = this.calculateEMA(data, this.slowPeriod);
+        const macdLine = fastEMA.map((fast, i) => fast - slowEMA[i]);
+        const signalLine = this.calculateEMA(macdLine, this.signalPeriod);
+        const histogram = macdLine.map((macd, i) => macd - signalLine[i]);
+
+        return {
+            macdLine,
+            signalLine,
+            histogram
+        };
+    }
+
+    calculateEMA(data, period) {
+        const k = 2 / (period + 1);
+        let ema = [data[0]];
+
+        for (let i = 1; i < data.length; i++) {
+            ema.push(data[i] * k + ema[i - 1] * (1 - k));
+        }
+
+        return ema;
+    }
+}
+
+export default MACD;
+```
+
+## File: ./static/js/strategies/myriadLabs.js {#file---static-js-strategies-myriadLabs-js}
+
+```javascript
+import MACD from '../indicators/macd.js';
+import DivergenceDetector from '../indicators/divergence.js';
+
+class MyriadLabsStrategy {
+    constructor(chart, params) {
+        this.chart = chart;
+        this.params = params;
+        this.macd = new MACD(params.macdFastLen, params.macdSlowLen, params.macdSigLen);
+        this.divergenceDetector = new DivergenceDetector(
+            params.divPivotLeftbars,
+            params.divPivotRightbars,
+            params.divPivotLookBackLen,
+            params.divPivotHowManyToCheck
+        );
+        this.setup = {
+            position_is_long: false,
+            position_is_short: false,
+            entry_time: null,
+            entry_price: null,
+            sl: null,
+            tp1: null,
+            tp2: null,
+            tp3: null,
+            risk: null
+        };
+        this.performance = {
+            net_profit: 0,
+            total_trades_closed: 0,
+            winning_trades: 0,
+            max_drawdown: 0,
+            gross_profit: 0,
+            gross_loss: 0
+        };
+    }
+
+    run(data) {
+        const closes = data.map(d => d.close);
+        const macdResult = this.macd.calculate(closes);
+        const divergences = this.divergenceDetector.detect(closes, macdResult.histogram);
+
+        this.checkEntryConditions(data, divergences);
+        this.manageTrades(data);
+        this.updateChart(data, macdResult, divergences);
+    }
+
+    checkEntryConditions(data, divergences) {
+        const lastCandle = data[data.length - 1];
+        const lastDivergence = divergences[divergences.length - 1];
+
+        if (lastDivergence && !this.setup.position_is_long && !this.setup.position_is_short) {
+            if (lastDivergence.type === 'bullish' && lastCandle.close > lastDivergence.y2) {
+                this.enterLong(lastCandle, lastDivergence.y1);
+            } else if (lastDivergence.type === 'bearish' && lastCandle.close < lastDivergence.y2) {
+                this.enterShort(lastCandle, lastDivergence.y1);
+            }
+        }
+    }
+
+    enterLong(candle, sl) {
+        this.setup = {
+            position_is_long: true,
+            position_is_short: false,
+            entry_time: candle.time,
+            entry_price: candle.close,
+            sl: sl,
+            risk: candle.close - sl
+        };
+        this.calculateTakeProfit();
+        this.chart.addMarker({
+            time: candle.time,
+            position: 'belowBar',
+            color: '#2196F3',
+            shape: 'arrowUp',
+            text: 'Long'
+        });
+    }
+
+    enterShort(candle, sl) {
+        this.setup = {
+            position_is_long: false,
+            position_is_short: true,
+            entry_time: candle.time,
+            entry_price: candle.close,
+            sl: sl,
+            risk: sl - candle.close
+        };
+        this.calculateTakeProfit();
+        this.chart.addMarker({
+            time: candle.time,
+            position: 'aboveBar',
+            color: '#FF5252',
+            shape: 'arrowDown',
+            text: 'Short'
+        });
+    }
+
+    calculateTakeProfit() {
+        const { entry_price, risk } = this.setup;
+        this.setup.tp1 = entry_price + this.params.tp1Ratio * risk * (this.setup.position_is_long ? 1 : -1);
+        this.setup.tp2 = entry_price + this.params.tp2Ratio * risk * (this.setup.position_is_long ? 1 : -1);
+        this.setup.tp3 = entry_price + this.params.tp3Ratio * risk * (this.setup.position_is_long ? 1 : -1);
+    }
+
+    manageTrades(data) {
+        if (!this.setup.position_is_long && !this.setup.position_is_short) return;
+
+        const lastCandle = data[data.length - 1];
+        if (this.setup.position_is_long) {
+            if (lastCandle.low <= this.setup.sl) {
+                this.exitTrade(lastCandle, 'Stop Loss');
+            } else if (lastCandle.high >= this.setup.tp1) {
+                this.partialExit(lastCandle, this.setup.tp1, this.params.tp1Share, 'TP1');
+            } else if (lastCandle.high >= this.setup.tp2) {
+                this.partialExit(lastCandle, this.setup.tp2, this.params.tp2Share, 'TP2');
+            } else if (lastCandle.high >= this.setup.tp3) {
+                this.exitTrade(lastCandle, 'TP3');
+            }
+        } else if (this.setup.position_is_short) {
+            if (lastCandle.high >= this.setup.sl) {
+                this.exitTrade(lastCandle, 'Stop Loss');
+            } else if (lastCandle.low <= this.setup.tp1) {
+                this.partialExit(lastCandle, this.setup.tp1, this.params.tp1Share, 'TP1');
+            } else if (lastCandle.low <= this.setup.tp2) {
+                this.partialExit(lastCandle, this.setup.tp2, this.params.tp2Share, 'TP2');
+            } else if (lastCandle.low <= this.setup.tp3) {
+                this.exitTrade(lastCandle, 'TP3');
+            }
+        }
+
+        if (this.params.sltpmode === 'Trailing') {
+            this.updateTrailingStop(lastCandle);
+        }
+    }
+
+    partialExit(candle, price, share, reason) {
+        const profit = (price - this.setup.entry_price) * (this.setup.position_is_long ? 1 : -1);
+        this.updatePerformance(profit * (share / 100));
+        this.chart.addMarker({
+            time: candle.time,
+            position: this.setup.position_is_long ? 'aboveBar' : 'belowBar',
+            color: '#4CAF50',
+            shape: 'circle',
+            text: reason
+        });
+    }
+
+    exitTrade(candle, reason) {
+        const profit = (candle.close - this.setup.entry_price) * (this.setup.position_is_long ? 1 : -1);
+        this.updatePerformance(profit);
+        this.chart.addMarker({
+            time: candle.time,
+            position: this.setup.position_is_long ? 'aboveBar' : 'belowBar',
+            color: '#FF9800',
+            shape: 'circle',
+            text: reason
+        });
+        this.setup = {
+            position_is_long: false,
+            position_is_short: false,
+            entry_time: null,
+            entry_price: null,
+            sl: null,
+            tp1: null,
+            tp2: null,
+            tp3: null,
+            risk: null
+        };
+    }
+
+    updateTrailingStop(candle) {
+        if (this.setup.position_is_long) {
+            const newSL = candle.close - this.params.trailingStopDistance;
+            if (newSL > this.setup.sl) {
+                this.setup.sl = newSL;
+            }
+        } else if (this.setup.position_is_short) {
+            const newSL = candle.close + this.params.trailingStopDistance;
+            if (newSL < this.setup.sl) {
+                this.setup.sl = newSL;
+            }
+        }
+    }
+
+    updatePerformance(profit) {
+        this.performance.net_profit += profit;
+        this.performance.total_trades_closed += 1;
+        if (profit > 0) {
+            this.performance.winning_trades += 1;
+            this.performance.gross_profit += profit;
+        } else {
+            this.performance.gross_loss -= profit;
+        }
+        this.performance.max_drawdown = Math.min(this.performance.max_drawdown, this.performance.net_profit);
+    }
+
+    updateChart(data, macdResult, divergences) {
+        // Update MACD series
+        this.chart.updateSeries('MACD Line', macdResult.macdLine.map((value, index) => ({ time: data[index].time, value })));
+        this.chart.updateSeries('Signal Line', macdResult.signalLine.map((value, index) => ({ time: data[index].time, value })));
+        this.chart.updateSeries('Histogram', macdResult.histogram.map((value, index) => ({ time: data[index].time, value })));
+
+        // Draw divergences
+        divergences.forEach(div => {
+            this.chart.addShape({
+                time1: data[div.x1].time,
+                price1: div.y1,
+                time2: data[div.x2].time,
+                price2: div.y2,
+                color: div.type === 'bullish' ? '#4CAF50' : '#FF5252',
+                lineWidth: 2,
+                lineStyle: 2,
+            });
+        });
+
+        // Update stop loss and take profit lines
+        if (this.setup.position_is_long || this.setup.position_is_short) {
+            this.chart.updateSeries('Stop Loss', [{ time: data[data.length - 1].time, value: this.setup.sl }]);
+            this.chart.updateSeries('TP1', [{ time: data[data.length - 1].time, value: this.setup.tp1 }]);
+            this.chart.updateSeries('TP2', [{ time: data[data.length - 1].time, value: this.setup.tp2 }]);
+            this.chart.updateSeries('TP3', [{ time: data[data.length - 1].time, value: this.setup.tp3 }]);
+        } else {
+            this.chart.updateSeries('Stop Loss', []);
+            this.chart.updateSeries('TP1', []);
+            this.chart.updateSeries('TP2', []);
+            this.chart.updateSeries('TP3', []);
+        }
+
+        // Update performance table
+        this.updatePerformanceTable();
+    }
+
+    updatePerformanceTable() {
+        const table = document.getElementById('performance-table');
+        if (!table) return;
+
+        table.innerHTML = `
+            <tr><td>Net Profit</td><td>${this.performance.net_profit.toFixed(2)}</td></tr>
+            <tr><td>Total Trades Closed</td><td>${this.performance.total_trades_closed}</td></tr>
+            <tr><td>Percent Profitable</td><td>${(this.performance.winning_trades / this.performance.total_trades_closed * 100).toFixed(2)}%</td></tr>
+            <tr><td>Profit Factor</td><td>${(this.performance.gross_profit / this.performance.gross_loss).toFixed(2)}</td></tr>
+            <tr><td>Max Drawdown</td><td>${this.performance.max_drawdown.toFixed(2)}</td></tr>
+            <tr><td>Avg Trade</td><td>${(this.performance.net_profit / this.performance.total_trades_closed).toFixed(2)}</td></tr>
+        `;
+    }
+}
+
+export default MyriadLabsStrategy;```
 
 ## File: ./t.md {#file---t-md}
 
@@ -3053,3 +3406,29 @@ requirements.txt```
 </body>
 </html>```
 
+
+
+.
+├── Stories
+│   └── add_indicators_button_feature.md
+├── __pycache__
+│   ├── ai_client.cpython-311.pyc
+│   ├── ai_client.cpython-39.pyc
+│   ├── data_fetcher.cpython-311.pyc
+│   └── data_fetcher.cpython-39.pyc
+├── ai_client.py
+├── create_project_md.sh
+├── data_fetcher.py
+├── documentation
+│   └── project_overview.md
+├── main.py
+├── requirements.txt
+├── static
+│   ├── css
+│   └── js
+├── t.md
+└── templates
+    └── index.html
+
+8 directories, 13 files
+(base) paulos@pauloss-MBP mlabsV2 % 

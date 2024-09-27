@@ -132,7 +132,20 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <!-- MyriadLabs Strategy Settings Modal -->
+    <div id="myriadlabs-settings-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>MyriadLabs Strategy Settings</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div id="myriadlabs-settings-form">
+                <!-- Strategy settings form will be dynamically added here -->
+            </div>
+            <button id="apply-myriadlabs-settings">Apply Settings</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}" type="module"></script>
 </body>
 </html>
